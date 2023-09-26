@@ -18,7 +18,7 @@ void ProcessMessages()
 		switch (m.header.type)
 		{
 		case MT_DATA:
-			cout << m.data << endl;
+			cout << "You got a message: " << m.data << endl << "From: " << to_string(m.header.from) << endl;
 		default:
 			Sleep(100);
 			break;
@@ -41,19 +41,19 @@ void Client()
 		switch (number)
 		{
 		case 1: {
-			cout << "Enter your message\n";
-			string str;
-			cin >> str;
 			cout << "Enter receiver's id\n";
-			int toId;
-			cin >> toId;
+			int to;
+			cin >> to;
 			Message m;
-			if (toId == m.clientID) {
+			if (to == m.clientID) {
 				cout << "You have entered your id\n";
 				break;
 			}
 			else {
-				Message::send(toId, MT_DATA, str);
+				cout << "Enter your message\n";
+				string str;
+				cin >> str;
+				Message::send(to, MT_DATA, str);
 				cout << "Message sent successfully\n";
 				break;
 			}

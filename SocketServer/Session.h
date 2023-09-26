@@ -1,4 +1,5 @@
 #pragma once
+#include <ctime>
 
 class Session
 {
@@ -6,10 +7,11 @@ public:
 	int id;
 	string name;
 	queue<Message> messages;
+	std::chrono::high_resolution_clock::time_point lastInteraction;
 
 	CCriticalSection cs;
-	Session(int _id, string _name)
-		:id(_id), name(_name)
+	Session(int _id, string _name, std::chrono::high_resolution_clock::time_point _lastInteracion)
+		:id(_id), name(_name), lastInteraction(_lastInteracion)
 	{
 	}
 

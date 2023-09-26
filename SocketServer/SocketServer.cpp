@@ -1,6 +1,3 @@
-// SocketServer.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include "pch.h"
 #include "framework.h"
 #include "SocketServer.h"
@@ -23,24 +20,42 @@ void LaunchClient()
 int maxID = MR_USER;
 map<int, shared_ptr<Session>> sessions;
 
+void checkClients() {
+	int del = 0;
+	for (auto& session : sessions)
+	{
+		std::chrono::duration<double> elapsed_seconds = std::chrono::high_resolution_clock::now() - session.second->lastInteraction;
+		if (elapsed_seconds.count() >= 5)
+		{
+			session.second->lastInteraction = std::chrono::high_resolution_clock::now();
+			del = session.first;
+		}
+	}
+	if (del != 0) {
+		cout << "Session " + to_string(del) + " deleted\n";
+		sessions.erase(del);
+	}
+}
+
 void ProcessClient(SOCKET hSock)
 {
 	CSocket s;
 	s.Attach(hSock);
 	Message m;
 	int code = m.receive(s);
-	cout << m.header.to << ": " << m.header.from << ": " << m.header.type << ": " << code << endl;
+	//cout << m.header.to << ": " << m.header.from << ": " << m.header.type << ": " << code << endl;
 	switch (code)
 	{
 	case MT_INIT:
 	{
-		auto session = make_shared<Session>(++maxID, m.data);
+		auto session = make_shared<Session>(++maxID, m.data, std::chrono::high_resolution_clock::now());
 		sessions[session->id] = session;
 		Message::send(s, session->id, MR_BROKER, MT_INIT);
 		break;
 	}
 	case MT_EXIT:
 	{
+		cout << "Client " + to_string(m.header.from) + " quited\n";
 		sessions.erase(m.header.from);
 		Message::send(s, m.header.from, MR_BROKER, MT_CONFIRM);
 		break;
@@ -48,28 +63,38 @@ void ProcessClient(SOCKET hSock)
 	case MT_GETDATA:
 	{
 		auto iSession = sessions.find(m.header.from);
+
 		if (iSession != sessions.end())
 		{
+			iSession->second->lastInteraction = std::chrono::high_resolution_clock::now();
 			iSession->second->send(s);
+
 		}
 		break;
 	}
 	default:
 	{
+
+		cout << "MESSAGE SENT\n";
+		Sleep(100);
 		auto iSessionFrom = sessions.find(m.header.from);
 		if (iSessionFrom != sessions.end())
 		{
+			iSessionFrom->second->lastInteraction = std::chrono::high_resolution_clock::now();
 			auto iSessionTo = sessions.find(m.header.to);
 			if (iSessionTo != sessions.end())
 			{
 				iSessionTo->second->add(m);
+				iSessionTo->second->lastInteraction = std::chrono::high_resolution_clock::now();
 			}
 			else if (m.header.to == MR_ALL)
 			{
 				for (auto& [id, session] : sessions)
 				{
-					if (id != m.header.from)
+					if (id != m.header.from) {
+						session->lastInteraction = std::chrono::high_resolution_clock::now();
 						session->add(m);
+					}
 				}
 			}
 		}
@@ -83,7 +108,7 @@ void Server()
 	AfxSocketInit();
 
 	CSocket Server;
-	Server.Create(12345);
+	Server.Create(12435);
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -98,6 +123,8 @@ void Server()
 		Server.Accept(s);
 		thread t(ProcessClient, s.Detach());
 		t.detach();
+		thread c(checkClients);
+		c.detach();
 	}
 }
 
