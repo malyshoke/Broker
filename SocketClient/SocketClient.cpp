@@ -29,18 +29,50 @@ void ProcessMessages()
 void Client()
 {
 	AfxSocketInit();
+	cout << "Client has started\n";
 	thread t(ProcessMessages);
 	t.detach();
 
 	Message m = Message::send(MR_BROKER, MT_INIT);
-
-	while (true)
-	{
-		string str;
-		cin >> str;
-		Message::send(MR_ALL, MT_DATA, str);
+	while (true) {
+		cout << "Menu:\n1.Choose receiver\n2.Broadcast message\n3. Exit\n";
+		int number;
+		cin >> number;
+		switch (number)
+		{
+		case 1: {
+			cout << "Enter your message\n";
+			string str;
+			cin >> str;
+			cout << "Enter receiver's id\n";
+			int toId;
+			cin >> toId;
+			Message m;
+			if (toId == m.clientID) {
+				cout << "You have entered your id\n";
+				break;
+			}
+			else {
+				Message::send(toId, MT_DATA, str);
+				cout << "Message sent successfully\n";
+				break;
+			}
+		}
+		case 2: {
+			cout << "Enter your message\n";
+			string str;
+			cin >> str;
+			Message::send(MR_ALL, MT_DATA, str);
+			cout << "Message sent successfully \n";
+			break;
+		}
+		case 3: {
+			Message m = Message::send(MR_BROKER, MT_EXIT);
+			exit(0);
+			break;
+		}
+		}
 	}
-
 }
 
 CWinApp theApp;
