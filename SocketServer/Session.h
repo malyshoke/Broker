@@ -7,10 +7,10 @@ public:
     int id;
     string name;
     queue<Message> messages;
-    std::chrono::high_resolution_clock::time_point lastInteraction;
+    std::chrono::steady_clock::time_point lastInteraction;
 
     CCriticalSection cs;
-    Session(int _id, string _name, std::chrono::high_resolution_clock::time_point _lastInteracion)
+    Session(int _id, string _name, std::chrono::steady_clock::time_point _lastInteracion)
         :id(_id), name(_name), lastInteraction(_lastInteracion)
     {
     }
@@ -33,5 +33,10 @@ public:
             messages.front().send(s);
             messages.pop();
         }
+    }
+
+    std::string GetName()
+    {
+        return name;
     }
 };

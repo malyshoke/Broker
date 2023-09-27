@@ -20,18 +20,6 @@
 #include <ctime>
 #include <chrono>
 #include <mutex>
-#include "pch.h"
-#include "framework.h"
-#include "SocketServer.h"
-#include "Message.h"
-#include "Session.h"
-#include <thread>
-#include <map>
-#include <queue>
-#include <iostream>
-#include <ctime>
-#include <chrono>
-#include <mutex>
 
 class Server {
 public:
@@ -45,14 +33,24 @@ public:
         CloseHandle(pi.hProcess);
     }
 
+    string GetActiveUsers()
+    {
+        string NamesAndIds = "";
+        for (auto& session : sessions)
+        {
+            NamesAndIds = NamesAndIds + to_string(session.second->id) + " " + session.second->GetName() + " ";
+        }
+        return NamesAndIds;
+    }
+
     void CheckClients() {
         int del = 0;
         for (auto& session : sessions)
         {
-            std::chrono::duration<double> elapsed_seconds = std::chrono::high_resolution_clock::now() - session.second->lastInteraction;
+            std::chrono::duration<double> elapsed_seconds = std::chrono::steady_clock::now() - session.second->lastInteraction;
             if (elapsed_seconds.count() >= 5)
             {
-                session.second->lastInteraction = std::chrono::high_resolution_clock::now();
+                session.second->lastInteraction = std::chrono::steady_clock::now();
                 del = session.first;
             }
         }
@@ -71,7 +69,7 @@ public:
         {
         case MT_INIT:
         {
-            auto session = make_shared<Session>(++maxID, m.data, std::chrono::high_resolution_clock::now()); //создание сессии
+            auto session = make_shared<Session>(++maxID, m.data, std::chrono::steady_clock::now()); //создание сессии
             sessions[session->id] = session;
             cout << "Client " << session->id << " connected\n"; //сообщение о присвоении id
             Message::send(s, session->id, MR_BROKER, MT_INIT);
@@ -90,7 +88,7 @@ public:
 
             if (iSession != sessions.end())
             {
-                iSession->second->lastInteraction = std::chrono::high_resolution_clock::now();
+                iSession->second->lastInteraction = std::chrono::steady_clock::now();
                 iSession->second->send(s);
 
             }
@@ -98,40 +96,42 @@ public:
         }
         default:
         {
-            cout << "Message has been sent\n";
             Sleep(100);
-            auto iSessionFrom = sessions.find(m.header.from); //отправитель
+            auto iSessionFrom = sessions.find(m.header.from); // отправитель
             if (iSessionFrom != sessions.end())
             {
-                iSessionFrom->second->lastInteraction = std::chrono::high_resolution_clock::now();
-                auto iSessionTo = sessions.find(m.header.to); //получатель
+                cout << "Message has been sent\n";
+                iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
+                auto iSessionTo = sessions.find(m.header.to); // получатель
                 if (iSessionTo != sessions.end())
                 {
-                    iSessionTo->second->add(m); //кладем в очередь
-                    iSessionTo->second->lastInteraction = std::chrono::high_resolution_clock::now();
+                    iSessionTo->second->add(m); // кладем в очередь
+                    cout << "Message delivered successfully\n";
+                    iSessionTo->second->lastInteraction = std::chrono::steady_clock::now();
                 }
                 else if (m.header.to == MR_ALL)
                 {
                     for (auto& [id, session] : sessions)
                     {
                         if (id != m.header.from) {
-                            session->lastInteraction = std::chrono::high_resolution_clock::now();
+                            session->lastInteraction = std::chrono::steady_clock::now();
                             session->add(m);
                         }
                     }
+                    cout << "Message delivered successfully\n";
                 }
+                else cout << "Message not delivered\n";
             }
+           // cout << "Message not delivered\n"; // Переместили вывод изнутри условия
             break;
         }
-        }
+       }
     }
-
     void RunServer() {
         AfxSocketInit();
 
         CSocket Server;
         Server.Create(12435);
-
         for (int i = 0; i < 3; ++i)
         {
             LaunchClient();
