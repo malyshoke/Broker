@@ -38,6 +38,7 @@ void Client()
 		cout << "Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n";
 		int number;
 		cin >> number;
+		string str;
 		switch (number)
 		{
 		case 1: {
@@ -51,8 +52,8 @@ void Client()
 			}
 			else {
 				cout << "Enter your message\n";
-				string str;
-				cin >> str;
+				cin.ignore();
+				getline(cin, str);
 				Message::send(to, MT_DATA, str);
 				cout << "Message sent successfully\n";
 				break;
@@ -60,8 +61,8 @@ void Client()
 		}
 		case 2: {
 			cout << "Enter your message\n";
-			string str;
-			cin >> str;
+			cin.ignore(); 
+			getline(cin, str);
 			Message::send(MR_ALL, MT_DATA, str);
 			cout << "Message sent successfully \n";
 			break;

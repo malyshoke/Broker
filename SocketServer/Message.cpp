@@ -42,4 +42,3 @@ Message Message::send(int to, int type, const string& data)
 	}
 	return m;
 }
-
