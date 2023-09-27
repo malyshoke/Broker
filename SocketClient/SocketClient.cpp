@@ -35,7 +35,7 @@ void Client()
 
 	Message m = Message::send(MR_BROKER, MT_INIT);
 	while (true) {
-		cout << "Menu:\n1.Choose receiver\n2.Broadcast message\n3. Exit\n";
+		cout << "Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n";
 		int number;
 		cin >> number;
 		switch (number)

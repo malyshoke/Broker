@@ -50,12 +50,13 @@ void ProcessClient(SOCKET hSock)
 	{
 		auto session = make_shared<Session>(++maxID, m.data, std::chrono::high_resolution_clock::now());
 		sessions[session->id] = session;
+		cout << "Client " << session->id << " connected\n"; 
 		Message::send(s, session->id, MR_BROKER, MT_INIT);
 		break;
 	}
 	case MT_EXIT:
 	{
-		cout << "Client " + to_string(m.header.from) + " quited\n";
+		cout << "Client " + to_string(m.header.from) + " disconnected\n";
 		sessions.erase(m.header.from);
 		Message::send(s, m.header.from, MR_BROKER, MT_CONFIRM);
 		break;
@@ -75,7 +76,7 @@ void ProcessClient(SOCKET hSock)
 	default:
 	{
 
-		cout << "MESSAGE SENT\n";
+		cout << "Message has been sent\n";
 		Sleep(100);
 		auto iSessionFrom = sessions.find(m.header.from);
 		if (iSessionFrom != sessions.end())
