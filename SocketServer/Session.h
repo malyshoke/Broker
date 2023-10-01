@@ -35,8 +35,4 @@ public:
         }
     }
 
-    std::string GetName()
-    {
-        return name;
-    }
 };

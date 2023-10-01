@@ -3,16 +3,6 @@
 #include "SocketServer.h"
 #include "Message.h"
 #include "Session.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
-#include "pch.h"
-#include "framework.h"
-#include "SocketServer.h"
-#include "Message.h"
-#include "Session.h"
 #include <thread>
 #include <map>
 #include <queue>
@@ -20,6 +10,11 @@
 #include <ctime>
 #include <chrono>
 #include <mutex>
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 
 class Server {
 public:
@@ -33,22 +28,12 @@ public:
         CloseHandle(pi.hProcess);
     }
 
-    string GetActiveUsers()
-    {
-        string NamesAndIds = "";
-        for (auto& session : sessions)
-        {
-            NamesAndIds = NamesAndIds + to_string(session.second->id) + " " + session.second->GetName() + " ";
-        }
-        return NamesAndIds;
-    }
-
     void CheckClients() {
         int del = 0;
         for (auto& session : sessions)
         {
-            std::chrono::duration<double> elapsed_seconds = std::chrono::steady_clock::now() - session.second->lastInteraction;
-            if (elapsed_seconds.count() >= 5)
+            std::chrono::duration<double> seconds = std::chrono::steady_clock::now() - session.second->lastInteraction;
+            if (seconds.count() >= 5)
             {
                 session.second->lastInteraction = std::chrono::steady_clock::now();
                 del = session.first;
@@ -84,13 +69,17 @@ public:
         }
         case MT_GETDATA:
         {
-            auto iSession = sessions.find(m.header.from); //поиск сессии
+            auto iSession = sessions.find(m.header.from); //поиск сесси
 
             if (iSession != sessions.end())
             {
                 iSession->second->lastInteraction = std::chrono::steady_clock::now();
                 iSession->second->send(s);
 
+            }
+            else 
+            {
+                cout << "Who are you?" << m.header.from << endl;
             }
             break;
         }
@@ -100,7 +89,6 @@ public:
             auto iSessionFrom = sessions.find(m.header.from); // отправитель
             if (iSessionFrom != sessions.end())
             {
-                cout << "Message has been sent\n";
                 iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
                 auto iSessionTo = sessions.find(m.header.to); // получатель
                 if (iSessionTo != sessions.end())
@@ -122,7 +110,6 @@ public:
                 }
                 else cout << "Message not delivered\n";
             }
-           // cout << "Message not delivered\n"; // Переместили вывод изнутри условия
             break;
         }
        }

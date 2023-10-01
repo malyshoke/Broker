@@ -37,14 +37,25 @@ void Client()
 	while (true) {
 		cout << "Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n";
 		int number;
-		cin >> number;
+		while ((cin >> number).fail())
+		{
+			cin.clear();
+			cin.ignore(10000, '\n');
+			cout << "Enter number\n";
+		}
+		//cin >> number;
 		string str;
 		switch (number)
 		{
 		case 1: {
 			cout << "Enter receiver's id\n";
 			int to;
-			cin >> to;
+			while ((cin >> to).fail())
+			{
+				cin.clear();
+				cin.ignore(10000, '\n');
+				cout << "Enter number\n";
+			}
 			Message m;
 			if (to == m.clientID) {
 				cout << "You have entered your id\n";
