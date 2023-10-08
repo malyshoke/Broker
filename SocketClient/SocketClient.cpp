@@ -18,7 +18,7 @@ void ProcessMessages()
 		switch (m.header.type)
 		{
 		case MT_DATA:
-			cout << m.data << endl;
+			cout << "You got a message: " << m.data << endl << "From: " << to_string(m.header.from) << endl;
 		default:
 			Sleep(100);
 			break;
@@ -29,18 +29,62 @@ void ProcessMessages()
 void Client()
 {
 	AfxSocketInit();
+	cout << "Client has started\n";
 	thread t(ProcessMessages);
 	t.detach();
 
 	Message m = Message::send(MR_BROKER, MT_INIT);
-
-	while (true)
-	{
+	while (true) {
+		cout << "Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n";
+		int number;
+		while ((cin >> number).fail())
+		{
+			cin.clear();
+			cin.ignore(10000, '\n');
+			cout << "Enter number\n";
+		}
+		//cin >> number;
 		string str;
-		cin >> str;
-		Message::send(MR_ALL, MT_DATA, str);
+		switch (number)
+		{
+		case 1: {
+			cout << "Enter receiver's id\n";
+			int to;
+			while ((cin >> to).fail())
+			{
+				cin.clear();
+				cin.ignore(10000, '\n');
+				cout << "Enter number\n";
+			}
+			Message m;
+			if (to == m.clientID) {
+				cout << "You have entered your id\n";
+				break;
+			}
+			else {
+				cout << "Enter your message\n";
+				cin.ignore();
+				getline(cin, str);
+				Message::send(to, MT_DATA, str);
+				cout << "Message sent successfully\n";
+				break;
+			}
+		}
+		case 2: {
+			cout << "Enter your message\n";
+			cin.ignore(); 
+			getline(cin, str);
+			Message::send(MR_ALL, MT_DATA, str);
+			cout << "Message sent successfully \n";
+			break;
+		}
+		case 3: {
+			Message m = Message::send(MR_BROKER, MT_EXIT);
+			exit(0);
+			break;
+		}
+		}
 	}
-
 }
 
 CWinApp theApp;

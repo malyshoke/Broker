@@ -29,7 +29,7 @@ Message Message::send(int to, int type, const string& data)
 {
 	CSocket s;
 	s.Create();
-	if (!s.Connect("127.0.0.1", 12345))
+	if (!s.Connect("127.0.0.1", 12435))
 	{
 		throw runtime_error(GetLastErrorString());
 	}
@@ -38,7 +38,7 @@ Message Message::send(int to, int type, const string& data)
 	if (m.receive(s) == MT_INIT)
 	{
 		clientID = m.header.to;
+		cout << "clientID is " + to_string(clientID) + "\n";
 	}
 	return m;
 }
-
