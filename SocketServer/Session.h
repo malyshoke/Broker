@@ -1,5 +1,8 @@
 #pragma once
-#include <ctime>
+#include <string>
+#include <queue>
+#include <afxmt.h> 
+#include <chrono>
 
 class Session
 {
@@ -10,9 +13,24 @@ public:
     std::chrono::steady_clock::time_point lastInteraction;
 
     CCriticalSection cs;
-    Session(int _id, string _name, std::chrono::steady_clock::time_point _lastInteracion)
-        :id(_id), name(_name), lastInteraction(_lastInteracion)
+    Session(int _id, string _name, std::chrono::steady_clock::time_point _lastInteraction)
+        : id(_id), name(_name), lastInteraction(_lastInteraction)
     {
+    }
+
+    bool stillActive()
+    {
+        if (this->inActivity() > 10000)
+            return false;
+        else
+            return true;
+    }
+
+    int inActivity()
+    {
+        auto now = std::chrono::steady_clock::now();
+        auto intMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastInteraction);
+        return static_cast<int>(intMilliseconds.count());
     }
 
     void add(Message& m)
@@ -34,5 +52,4 @@ public:
             messages.pop();
         }
     }
-
 };

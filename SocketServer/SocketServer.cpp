@@ -35,13 +35,38 @@ public:
             std::chrono::duration<double> seconds = std::chrono::steady_clock::now() - session.second->lastInteraction;
             if (seconds.count() >= 5)
             {
-                session.second->lastInteraction = std::chrono::steady_clock::now();
                 del = session.first;
             }
         }
         if (del != 0) {
             cout << "Session " + to_string(del) + " deleted\n";
             sessions.erase(del);
+        }
+    }
+
+
+
+    void Server::IsActive()
+    {
+        while (true)
+        {
+            std::vector<int> allIds(sessions.size());
+            for (auto& [id, session] : sessions)
+            {
+                allIds.push_back(id);
+            }
+
+            for (int id : allIds)
+            {
+                auto sessionIt = sessions.find(id);
+
+                if (sessionIt != sessions.end() && !(sessionIt->second->stillActive()))
+                {
+                    cout << "Time out. Client " << id << " disconnected" << endl;
+                    sessions.erase(sessionIt);
+                }
+            }
+            Sleep(100);
         }
     }
 
@@ -54,9 +79,9 @@ public:
         {
         case MT_INIT:
         {
-            auto session = make_shared<Session>(++maxID, m.data, std::chrono::steady_clock::now()); //создание сессии
+            auto session = make_shared<Session>(++maxID, m.data, std::chrono::steady_clock::now()); 
             sessions[session->id] = session;
-            cout << "Client " << session->id << " connected\n"; //сообщение о присвоении id
+            cout << "Client " << session->id << " connected\n"; 
             Message::send(s, session->id, MR_BROKER, MT_INIT);
             break;
         }
@@ -69,7 +94,7 @@ public:
         }
         case MT_GETDATA:
         {
-            auto iSession = sessions.find(m.header.from); //поиск сесси
+            auto iSession = sessions.find(m.header.from); 
 
             if (iSession != sessions.end())
             {
@@ -77,23 +102,22 @@ public:
                 iSession->second->send(s);
 
             }
-            else 
+            else
             {
-                cout << "Who are you?" << m.header.from << endl;
             }
             break;
         }
         default:
         {
             Sleep(100);
-            auto iSessionFrom = sessions.find(m.header.from); // отправитель
+            auto iSessionFrom = sessions.find(m.header.from); 
             if (iSessionFrom != sessions.end())
             {
                 iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
-                auto iSessionTo = sessions.find(m.header.to); // получатель
+                auto iSessionTo = sessions.find(m.header.to); 
                 if (iSessionTo != sessions.end())
                 {
-                    iSessionTo->second->add(m); // кладем в очередь
+                    iSessionTo->second->add(m); 
                     cout << "Message delivered successfully\n";
                     iSessionTo->second->lastInteraction = std::chrono::steady_clock::now();
                 }
@@ -112,9 +136,13 @@ public:
             }
             break;
         }
-       }
+        }
     }
     void RunServer() {
+       
+        thread clientConnection(&Server::IsActive, this);
+        clientConnection.detach(); 
+        
         AfxSocketInit();
 
         CSocket Server;
@@ -132,14 +160,13 @@ public:
             Server.Accept(s);
             thread t(&Server::ProcessClient, this, s.Detach());
             t.detach();
-            thread c(&Server::CheckClients, this);
-            c.detach();
+          
         }
     }
 
 private:
-    int maxID; //id макс клиента
-    map<int, shared_ptr<Session>> sessions; //все сессии и id
+    int maxID; 
+    map<int, shared_ptr<Session>> sessions; 
 };
 
 int main()
@@ -148,27 +175,27 @@ int main()
 
     HMODULE hModule = ::GetModuleHandle(nullptr);
 
-        if (hModule != nullptr)
+    if (hModule != nullptr)
+    {
+        // initialize MFC and print and error on failure
+        if (!AfxWinInit(hModule, nullptr, ::GetCommandLine(), 0))
         {
-            // initialize MFC and print and error on failure
-            if (!AfxWinInit(hModule, nullptr, ::GetCommandLine(), 0))
-            {
-                // TODO: code your application's behavior here.
-                wprintf(L"Fatal Error: MFC initialization failed\n");
-                nRetCode = 1;
-            }
-            else
-            {
-                Server Server;
-                Server.RunServer();
-            }
+            // TODO: code your application's behavior here.
+            wprintf(L"Fatal Error: MFC initialization failed\n");
+            nRetCode = 1;
         }
         else
         {
-            // TODO: change error code to suit your needs
-            wprintf(L"Fatal Error: GetModuleHandle failed\n");
-            nRetCode = 1;
+            Server Server;
+            Server.RunServer();
         }
+    }
+    else
+    {
+        // TODO: change error code to suit your needs
+        wprintf(L"Fatal Error: GetModuleHandle failed\n");
+        nRetCode = 1;
+    }
 
     return nRetCode;
 }
