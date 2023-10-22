@@ -35,10 +35,45 @@ namespace SharpClient
             var m = Message.send(MessageRecipients.MR_BROKER, MessageTypes.MT_INIT);
             while (true)
             {
-                var s = Console.ReadLine();
-                if (s is not null)
+                Console.WriteLine("Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n");
+                int menu;
+                if (int.TryParse(Console.ReadLine(), out menu))
                 {
-                    Message.send(MessageRecipients.MR_ALL, MessageTypes.MT_DATA, s);
+                    switch (menu)
+                    {
+                        case 1:
+                            {
+                                Console.WriteLine("Enter receiver's id");
+                                int to;
+                                while (int.TryParse(Console.ReadLine(), out to) != true)
+                                {
+                                    Console.WriteLine("Enter number");
+                                }
+                                Console.WriteLine("Enter your message");
+                                var str = Console.ReadLine();
+                                if (str is not null & to != 0)
+                                {
+                                Message.send((MessageRecipients)to, MessageTypes.MT_DATA, str);
+                                }
+                                break;
+                            }
+                        case 2:
+                            {
+                                Console.WriteLine("Enter your message");
+                                var str = Console.ReadLine();
+                                if (str is not null)
+                                {
+                                    Message.send(MessageRecipients.MR_ALL, MessageTypes.MT_DATA, str);
+                                }
+                                break;
+                            }
+                        case 3:
+                            {
+                                Message.send(MessageRecipients.MR_BROKER, MessageTypes.MT_EXIT);
+                                System.Environment.Exit(0);
+                                break;
+                            }
+                    }
                 }
             }
         }
