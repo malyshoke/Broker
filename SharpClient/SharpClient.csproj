@@ -5,6 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <BaseOutputPath>D:\Рабочий стол\Учеба\7 семестр\TRIS\MsgSockets\x64</BaseOutputPath>
   </PropertyGroup>
 
 </Project>

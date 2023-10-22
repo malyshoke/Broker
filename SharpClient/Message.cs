@@ -16,9 +16,8 @@ namespace SharpClient
         MT_GETDATA,
         MT_DATA,
         MT_NODATA,
-        MT_CONFIRM
-    };
-
+        MT_CONFIRM,
+    }
     public enum MessageRecipients : int
     {
         MR_BROKER = 10,
@@ -124,7 +123,7 @@ namespace SharpClient
         }
         public static Message send(MessageRecipients to, MessageTypes type = MessageTypes.MT_DATA, string data = "")
         {
-            int nPort = 12345;
+            int nPort = 12435;
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), nPort);
             Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             s.Connect(endPoint);
@@ -133,12 +132,21 @@ namespace SharpClient
                 throw new Exception("Connection error");
             }
             var m = new Message(to, clientID, type, data);
-            m.send(s);
-            if (m.receive(s) == MessageTypes.MT_INIT)
+            if (m.header.to == m.header.from)
             {
-                clientID = m.header.to;
+                Console.WriteLine("You have entered your id");
+                return m;
             }
-            return m;
+            else
+            {
+                m.send(s);
+                if (m.receive(s) == MessageTypes.MT_INIT)
+                {
+                    clientID = m.header.to;
+                    Console.WriteLine("clientID is " + clientID + "\n");
+                }
+                return m;
+            }
         }
     }
 }
