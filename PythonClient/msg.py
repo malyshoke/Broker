@@ -50,13 +50,17 @@ class Message:
 
 	def SendMessage(To, Type = MT_DATA, Data=""):
 		HOST = 'localhost'
-		PORT = 12345
+		PORT = 12435
 		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			s.connect((HOST, PORT))
 			m = Message(To, Message.ClientID, Type, Data)
-			m.Send(s)
-			m.Receive(s)
-			if m.Header.Type == MT_INIT:
-				Message.ClientID = m.Header.To
-			return m
+			if m.Header.From == m.Header.To:
+				print("You have entered your id")
+			else:
+				m.Send(s)
+				m.Receive(s)
+				if m.Header.Type == MT_INIT:
+					Message.ClientID = m.Header.To
+					print("clientID is " + str(m.Header.To))
+				return m
 
