@@ -19,7 +19,8 @@ namespace SharpClient
                 switch (m.header.type)
                 {
                     case MessageTypes.MT_DATA:
-                        Console.WriteLine(m.data);
+                        Console.WriteLine($"You got a message: {m.data}");
+                        Console.WriteLine($"From: {m.header.from}");
                         break;
                     default:
                         Thread.Sleep(100);
@@ -29,13 +30,14 @@ namespace SharpClient
         }
         static void Main(string[] args)
         {
+            Console.WriteLine("Client has started");
             Thread t = new Thread(ProcessMessages);
             t.Start();
 
             var m = Message.send(MessageRecipients.MR_BROKER, MessageTypes.MT_INIT);
             while (true)
             {
-                Console.WriteLine("Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit\n");
+                Console.WriteLine("Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit");
                 int menu;
                 if (int.TryParse(Console.ReadLine(), out menu))
                 {

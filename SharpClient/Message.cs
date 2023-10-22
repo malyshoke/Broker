@@ -143,7 +143,7 @@ namespace SharpClient
                 if (m.receive(s) == MessageTypes.MT_INIT)
                 {
                     clientID = m.header.to;
-                    Console.WriteLine("clientID is " + clientID + "\n");
+                    Console.WriteLine($"clientID is {clientID}");
                 }
                 return m;
             }
