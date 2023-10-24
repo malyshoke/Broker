@@ -31,7 +31,7 @@ def Client():
     print("Client has started\n")
     Message.SendMessage(MR_BROKER, MT_INIT)
     t = threading.Thread(target=ProcessMessages)
-    t.start()
+    t.start() #поток работает на прием
     while True:
         print("Menu:\n1. Choose receiver\n2. Broadcast message\n3. Exit")
         menu = get_integer_input("Enter your choice:\n")

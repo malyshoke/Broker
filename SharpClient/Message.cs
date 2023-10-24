@@ -44,14 +44,14 @@ namespace SharpClient
         public MessageHeader header;
         public string data;
         static MessageRecipients clientID;
-        static Encoding? cp866 = null;
+        static Encoding? cp866 = null; 
 
-        Encoding get866()
+        Encoding get866()//так как в консоли 866 кодировка, то все переводим в нее
         {
             if (cp866 is null)
             {
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                cp866 = Encoding.GetEncoding("CP866");
+                cp866 = Encoding.GetEncoding("CP866"); 
             }
             return cp866;
         }
@@ -63,11 +63,11 @@ namespace SharpClient
             header = new MessageHeader() { to = to, from = from, type = type, size = data.Length };
         }
 
-        static byte[] toBytes(object obj)
+        static byte[] toBytes(object obj) //из объекта получаем поток байтов
         {
             int size = Marshal.SizeOf(obj);
-            byte[] buff = new byte[size];
-            IntPtr ptr = Marshal.AllocHGlobal(size);
+            byte[] buff = new byte[size]; //выделяем память
+            IntPtr ptr = Marshal.AllocHGlobal(size);//указатель в глобальном пространстве
             Marshal.StructureToPtr(obj, ptr, true);
             Marshal.Copy(ptr, buff, 0, size);
             Marshal.FreeHGlobal(ptr);
@@ -124,7 +124,7 @@ namespace SharpClient
         public static Message send(MessageRecipients to, MessageTypes type = MessageTypes.MT_DATA, string data = "")
         {
             int nPort = 12435;
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), nPort);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), nPort);//привязываем к IP адресу 
             Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             s.Connect(endPoint);
             if (!s.Connected)

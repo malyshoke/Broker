@@ -21,12 +21,12 @@ class MsgHeader:
 	Type: int = 0
 	Size: int = 0
 
-	def Send(self, s):
-		s.send(struct.pack(f'iiii', self.To, self.From, self.Type, self.Size))
+	def Send(self, s): #второй передаваемый параметр - это сокет
+		s.send(struct.pack(f'iiii', self.To, self.From, self.Type, self.Size)) #все параметры кроме первого упаковываются, берутся 4 целых числа и упаковываются
 
 	def Receive(self, s):
 		try:
-			(self.To, self.From, self.Type, self.Size) = struct.unpack('iiii', s.recv(16))
+			(self.To, self.From, self.Type, self.Size) = struct.unpack('iiii', s.recv(16)) #16 байтов из сокета интерпретируем как 4 целых числа, получаем кортеж
 		except:
 			self.Size = 0
 			self.Type = MT_NODATA
@@ -41,12 +41,12 @@ class Message:
 	def Send(self, s):
 		self.Header.Send(s)
 		if self.Header.Size > 0:
-			s.send(struct.pack(f'{self.Header.Size}s', self.Data.encode('cp866')))
+			s.send(struct.pack(f'{self.Header.Size}s', self.Data.encode('cp866'))) #формируем строчку опеределенной длины и посылаем ее
 
 	def Receive(self, s):
 		self.Header.Receive(s)
 		if self.Header.Size > 0:
-			self.Data = struct.unpack(f'{self.Header.Size}s', s.recv(self.Header.Size))[0].decode('cp866')
+			self.Data = struct.unpack(f'{self.Header.Size}s', s.recv(self.Header.Size))[0].decode('cp866') #читаем из сокета кол-во байт, указанных в header, распаковываем и конвертируем нулевой элемент во внутреннюю строку
 
 	def SendMessage(To, Type = MT_DATA, Data=""):
 		HOST = 'localhost'
