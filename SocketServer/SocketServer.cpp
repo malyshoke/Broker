@@ -28,6 +28,15 @@ public:
         CloseHandle(pi.hProcess);
     }
 
+    void LaunchSharpClient()
+    {
+        STARTUPINFO si = { sizeof(si) };
+        PROCESS_INFORMATION pi;
+        CreateProcess(NULL, (LPSTR)"net7.0/SharpClient.exe", NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+
     void CheckClients() {
         int del = 0;
         for (auto& session : sessions)
@@ -147,9 +156,10 @@ public:
 
         CSocket Server;
         Server.Create(12435);
-        for (int i = 0; i < 3; ++i)
+       // for (int i = 0; i < 2; ++i)
         {
             LaunchClient();
+            LaunchSharpClient();
         }
 
         while (true)
