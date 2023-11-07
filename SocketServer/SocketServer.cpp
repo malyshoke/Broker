@@ -13,8 +13,7 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#endif
-
+#endif 
 
 class Server {
 public:
@@ -94,6 +93,16 @@ public:
             Message::send(s, session->id, MR_BROKER, MT_INIT);
             break;
         }
+
+        case MT_INITSTORAGE:
+        {
+            auto session = make_shared<Session>(MR_STORAGE, m.data, std::chrono::steady_clock::now());
+            sessions[session->id] = session;
+            cout << "Storage connected" << endl;
+            Message::send(s, session->id, MR_BROKER, MT_INITSTORAGE);
+            session->lastInteraction = std::chrono::steady_clock::now();
+            break;
+        }
         case MT_EXIT:
         {
             cout << "Client " + to_string(m.header.from) + " disconnected\n";
@@ -111,22 +120,51 @@ public:
                 iSession->second->send(s);
 
             }
+            break;
+        }
+        case MT_GETLAST:
+        {
+            if (m.header.from == MR_STORAGE)
+            {
+                auto iSessionTo = sessions.find(m.header.to);
+                if (iSessionTo != sessions.end())
+                {
+                    Message ms = Message(m.header.to, MR_BROKER, MT_GETLAST, m.data);
+                    iSessionTo->second->add(ms);
+                }
+            }
             else
             {
+                auto iSessionFrom = sessions.find(m.header.from);
+                auto StorageSession = sessions.find(MR_STORAGE);
+                if (StorageSession != sessions.end() && iSessionFrom != sessions.end())
+                {
+                    iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
+                    Message ms = Message(MR_STORAGE, m.header.from, MT_GETLAST);
+                    StorageSession->second->add(ms);
+                }
             }
             break;
         }
+
         default:
         {
             Sleep(100);
             auto iSessionFrom = sessions.find(m.header.from); 
-            if (iSessionFrom != sessions.end())
+            auto StorageSession = sessions.find(MR_STORAGE);
+            if (iSessionFrom != sessions.end() && m.header.from != MR_STORAGE)
             {
                 iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
                 auto iSessionTo = sessions.find(m.header.to); 
                 if (iSessionTo != sessions.end())
                 {
                     iSessionTo->second->add(m); 
+                    if (StorageSession != sessions.end())
+                    {
+                        m.data = "{'" + to_string(m.header.from) + "':'" + m.data + "'}";
+                        Message ms = Message(MR_BROKER, m.header.to, MT_DATA, m.data);
+                        StorageSession->second->add(ms);
+                    }
                     cout << "Message delivered successfully\n";
                     iSessionTo->second->lastInteraction = std::chrono::steady_clock::now();
                 }
@@ -134,14 +172,18 @@ public:
                 {
                     for (auto& [id, session] : sessions)
                     {
-                        if (id != m.header.from) {
+                        if (id != m.header.from && id != MR_STORAGE) {
                             session->lastInteraction = std::chrono::steady_clock::now();
                             session->add(m);
+                            if (StorageSession != sessions.end())
+                            {
+                                string mes = "{'" + to_string(m.header.from) + "':'" + m.data + "'}";
+                                Message ms = Message(MR_BROKER, id, MT_DATA, mes);
+                                StorageSession->second->add(ms);
+                            }
                         }
                     }
-                    cout << "Message delivered successfully\n";
                 }
-                else cout << "Message not delivered\n";
             }
             break;
         }

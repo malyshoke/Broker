@@ -17,10 +17,13 @@ namespace SharpClient
         MT_DATA,
         MT_NODATA,
         MT_CONFIRM,
+        MT_GETLAST,
+        MT_INITSTORAGE,
     }
     public enum MessageRecipients : int
     {
         MR_BROKER = 10,
+        MR_STORAGE = 20,
         MR_ALL = 50,
         MR_USER = 100
     };

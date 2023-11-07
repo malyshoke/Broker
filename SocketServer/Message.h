@@ -7,14 +7,17 @@ enum MessageTypes
 	MT_GETDATA,
 	MT_DATA,
 	MT_NODATA,
-	MT_CONFIRM
+	MT_CONFIRM,
+	MT_GETLAST,
+	MT_INITSTORAGE
 };
 
 enum MessageRecipients
 {
 	MR_BROKER = 10,
+	MR_STORAGE = 20,
 	MR_ALL = 50,
-	MR_USER = 100
+	MR_USER = 100   
 };
 
 struct MessageHeader
