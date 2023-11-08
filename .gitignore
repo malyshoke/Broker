@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/PythonClient/dist/client
+/PythonStorage/build/storage
+/PythonClient/build/client
+/PythonStorage/dist/storage
+/PythonCGIServer
+/PythonWebClient/build/client
+/PythonWebClient/dist/client
+/PythonAPI/RestPythonClient/build/client
+/PythonAPI/RestPythonClient/dist/client

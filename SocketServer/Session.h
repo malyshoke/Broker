@@ -18,6 +18,11 @@ public:
     {
     }
 
+    Session(int _id, std::chrono::steady_clock::time_point _lastInteraction)
+        :id(_id), lastInteraction(_lastInteraction)
+    {
+    }
+
     bool stillActive()
     {
         if (this->inActivity() > 10000)

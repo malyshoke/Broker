@@ -53,7 +53,7 @@ namespace SharpClient
                                 }
                                 Console.WriteLine("Enter your message");
                                 var str = Console.ReadLine();
-                                if (str is not null & to != 0)
+                                if (str is not null && to != 0)
                                 {
                                 Message.send((MessageRecipients)to, MessageTypes.MT_DATA, str);
                                 }
