@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /PythonClient/build/client
 /PythonStorage/dist/storage
 /PythonCGIServer
+/PythonWebClient/build/client
+/PythonWebClient/dist/client
