@@ -53,7 +53,6 @@ public:
     }
 
 
-
     void Server::IsActive()
     {
         while (true)
