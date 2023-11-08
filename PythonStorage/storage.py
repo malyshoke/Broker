@@ -8,8 +8,6 @@ def ProcessMessages():
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
         if (m.Header.Type == MT_DATA):
             print(f"Message: {m.Data}")
-            print(f"To: {m.Header.To}")
-            print(f"From: {m.Header.From}")
             data = []
             try:
                 with open('msgstorage.json', 'r') as f:
@@ -25,28 +23,27 @@ def ProcessMessages():
                 print(f"New msg added to {m.Header.From}")
 
         if (m.Header.Type == MT_GETLAST):
-            print("Last sent message")
-            print(f"Message: {m.Data}")
-            print(f"To: {m.Header.To}")
-            print(f"From: {m.Header.From}")
-            taker = str(m.Header.From)
+            to = str(m.Header.From)
             with open('msgstorage.json', 'r') as f:
                 data = json.load(f)
             text = ""
             for item in data:
                 for key, value in item.items():
-                    if (key == taker):
+                    if (key == to):
                         text += value
                         text += ","
             text = text[:-1]
             Message.SendMessage(m.Header.From, MT_GETLAST, text)
-            print(f"Last msgs sent to {taker}: {text}\n")
+            if (len(text) == 0):
+                print(f"No message to user {to}")
+            else:
+                print(f"Last msgs sent to {to}: {text}")
         else:
             time.sleep(1)
 
         
 def Storage():
-    print("Storage has started\n")
+    print("Storage has started")
     Message.SendMessage(MR_BROKER, MT_INITSTORAGE)
     t = threading.Thread(target=ProcessMessages)
     t.start()

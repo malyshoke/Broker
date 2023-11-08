@@ -41,7 +41,7 @@ public:
         for (auto& session : sessions)
         {
             std::chrono::duration<double> seconds = std::chrono::steady_clock::now() - session.second->lastInteraction;
-            if (seconds.count() >= 5)
+            if (seconds.count() >= 60)
             {
                 del = session.first;
             }

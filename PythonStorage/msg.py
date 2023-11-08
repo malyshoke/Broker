@@ -62,6 +62,5 @@ class Message:
 			m.Receive(s)
 			if m.Header.Type == MT_INITSTORAGE:
 				Message.ClientID = m.Header.To
-				print("clientID is " + str(m.Header.To))
 			return m
 

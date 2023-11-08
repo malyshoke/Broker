@@ -66,7 +66,7 @@ def ProcessMessages():
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
         clientId = m.Header.To
         if m.Header.Type == MT_DATA:
-            messages.append('Text: ' + m.Data + "   From: " + str(m.Header.From))
+            messages.append('Message: ' + m.Data + "   From: " + str(m.Header.From))
             print("New message: " + m.Data + "\nFrom: " + str(m.Header.From))
         else:
             time.sleep(1)
@@ -83,9 +83,6 @@ def Client():
         w.start()
         Message.SendMessage(MR_BROKER, MT_INIT)
         Message.SendMessage(MR_STORAGE, MT_GETLAST)
-        m = Message.SendMessage(MR_BROKER, MT_GETLAST)
-        clientId = m.Header.To
-        messages.append('Text: ' + m.Data + "   From: " + str(m.Header.From))
         t = threading.Thread(target=ProcessMessages)
         t.start()
 
