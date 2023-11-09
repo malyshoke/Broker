@@ -2,7 +2,6 @@ import cgi
 import threading
 from dataclasses import dataclass
 import socket, struct, time
-import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from msg import *
 
@@ -10,7 +9,6 @@ from msg import *
 messages = []
 clientId = 0
 clientmsg = ''
-initial_messages = []
 
 class requestHandler(BaseHTTPRequestHandler):
     global messages, clientmsg
@@ -67,20 +65,14 @@ def ProcessMessages():
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
         clientId = m.Header.To
-        print("LogHeaderType: ", m.Header.Type)
         if m.Header.Type == MT_DATA:
             messages.append('Message: ' + m.Data + "   From: " + str(m.Header.From))
             print("New message: " + m.Data + "\nFrom: " + str(m.Header.From))
-        elif m.Header.Type == MT_GETLAST and m.Header.To == clientId:
-            # Handle the response from storage during the initial load
-            print(m.Data)
-            #initial_messages = m.Data
-            #print("Mes in storage: ", initial_messages)
         else:
             time.sleep(1)
 
 def ProcessServer():
-    server_address = ("", 8000)
+    server_address = ("", 8080)
     print("Web interface started")
     HTTPServer(server_address, requestHandler).serve_forever()
 

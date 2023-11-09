@@ -169,20 +169,24 @@ public:
                 }
                 else if (m.header.to == MR_ALL)
                 {
+                    string mes = "{'" + to_string(m.header.from) + "':'" + m.data + "'}";
+
                     for (auto& [id, session] : sessions)
                     {
-                        if (id != m.header.from && id != MR_STORAGE) {
+                        if (id != m.header.from && id != MR_STORAGE)
+                        {
                             session->lastInteraction = std::chrono::steady_clock::now();
                             session->add(m);
-                            if (StorageSession != sessions.end())
-                            {
-                                string mes = "{'" + to_string(m.header.from) + "':'" + m.data + "'}";
-                                Message ms = Message(MR_BROKER, id, MT_DATA, mes);
-                                StorageSession->second->add(ms);
-                            }
                         }
                     }
+
+                    if (StorageSession != sessions.end())
+                    {
+                        Message ms = Message(MR_BROKER, MR_ALL, MT_DATA, mes);
+                        StorageSession->second->add(ms);
+                    }
                 }
+
             }
             break;
         }
