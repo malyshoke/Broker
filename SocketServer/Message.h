@@ -9,7 +9,8 @@ enum MessageTypes
 	MT_NODATA,
 	MT_CONFIRM,
 	MT_GETLAST,
-	MT_INITSTORAGE
+	MT_INITSTORAGE, 
+	MT_GETLAST_PUBLIC
 };
 
 enum MessageRecipients

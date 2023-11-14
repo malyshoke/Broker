@@ -121,6 +121,32 @@ public:
             }
             break;
         }
+
+        case MT_GETLAST_PUBLIC:
+        {
+            if (m.header.from == MR_STORAGE)
+            {
+                auto iSessionTo = sessions.find(m.header.to);
+                if (iSessionTo != sessions.end())
+                {
+                    Message ms = Message(m.header.to, MR_BROKER, MT_GETLAST_PUBLIC, m.data);
+                    iSessionTo->second->add(ms);
+                }
+            }
+            else
+            {
+                auto iSessionFrom = sessions.find(m.header.from);
+                auto StorageSession = sessions.find(MR_STORAGE);
+                if (StorageSession != sessions.end() && iSessionFrom != sessions.end())
+                {
+                    iSessionFrom->second->lastInteraction = std::chrono::steady_clock::now();
+                    Message ms = Message(MR_STORAGE, m.header.from, MT_GETLAST_PUBLIC);
+                    StorageSession->second->add(ms);
+                }
+            }
+            break;
+        }
+
         case MT_GETLAST:
         {
             if (m.header.from == MR_STORAGE)

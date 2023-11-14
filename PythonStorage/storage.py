@@ -50,7 +50,7 @@ def ProcessMessages():
             else:
                 print(f"Last personal msgs sent to {to}: {personal_text}")
 
-            Message.SendMessage(m.Header.From, MT_GETLAST, all_text)
+            Message.SendMessage(m.Header.From, MT_GETLAST_PUBLIC, all_text)
             if len(all_text) == 0:
                 print("No 'all' messages")
             else:

@@ -6,35 +6,74 @@ import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from msg import *
 
-
+initial_messages = []
 messages = []
 clientId = 0
 clientmsg = ''
-initial_messages = []
+private_messages = []
+public_messages = []
+
+initial_messages_event = threading.Event()  # Event to signal when initial messages are received
 
 class requestHandler(BaseHTTPRequestHandler):
-    global messages, clientmsg
-	
+    global messages, clientmsg, initial_messages, private_messages, public_messages
+
     def do_GET(self):
         self.send_response(200)
         self.send_header('content-type', 'text/html')
         self.end_headers()
+
+        # Wait until the event is set (initial messages received)
+        initial_messages_event.wait()
 
         output = '<html><body><form method="POST" enctype="multipart/form-data">' \
                  '<h1>ClientID is ' + str(clientId) + '</h1>' \
                  '<h1>' + str(clientmsg) + '</h1>' \
                  '<input name="message" type="text" placeholder="New message">' \
                  '<input name="id" type="text" placeholder="id">' \
-                 '<input name="SendToAll" type="checkbox" value = "1"/>' \
-                 '<label for ="SendToAll" > Send To All </label><br/>' \
+                 '<input name="SendToAll" type="checkbox" value="1"/>' \
+                 '<label for="SendToAll"> Send To All </label><br/>' \
                  '<input type="submit" value="Send">' \
                  '<input type="submit" value="Update" name="action" a href="/">' \
-                 '<h1>Message List</h1><ul>'
-        print(messages)
-        for i in messages:
-            output += '<li>' + i + '</li>'
-        output += '</ul>'
+                 '<h1>New messages</h1><ul>'
+        
+
+        if messages:
+            for i in messages:
+                output += '<li>' + i + '</li>'
+        else:
+            output += '<li>No messages</li>'
+        
+       	output += '</ul><h1>Archived Messages</h1><ul>'
+        output += '</ul><h2>Private Messages</h2><ul>'
+
+        for item in private_messages:
+            if not item or not isinstance(item, str):  # Skip empty strings or non-string items
+                continue
+            try:
+                message_dict = eval(item)  # Convert the string to a dictionary
+                sender, text = list(message_dict.items())[0]
+                output += '<li>Message: ' + text + ' From: ' + sender + '</li>'
+            except (SyntaxError, ValueError):
+                output += '<li>' + item + '</li>'
+
+        output += '</ul><h2>Public Messages</h2><ul>'
+
+
+        for item in public_messages:
+            if not item or not isinstance(item, str):  # Skip empty strings or non-string items
+                continue
+            try:
+                message_dict = eval(item)  # Convert the string to a dictionary
+                sender, text = list(message_dict.items())[0]
+                output += '<li>Message: ' + text + ' From: ' + sender + '</li>'
+            except (SyntaxError, ValueError):
+                output += '<li>' + item + '</li>'
+
+
+        output += '</ul></body></html>'
         self.wfile.write(output.encode())
+
 
     def do_POST(self):
         ctype, pdict = cgi.parse_header(self.headers['content-type'])
@@ -63,7 +102,7 @@ class requestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 def ProcessMessages():
-    global messages, clientId
+    global private_messages, public_messages, clientId, initial_messages
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
         clientId = m.Header.To
@@ -71,11 +110,14 @@ def ProcessMessages():
         if m.Header.Type == MT_DATA:
             messages.append('Message: ' + m.Data + "   From: " + str(m.Header.From))
             print("New message: " + m.Data + "\nFrom: " + str(m.Header.From))
-        elif m.Header.Type == MT_GETLAST and m.Header.To == clientId:
-            # Handle the response from storage during the initial load
-            print(m.Data)
-            #initial_messages = m.Data
-            #print("Mes in storage: ", initial_messages)
+        elif m.Header.Type == MT_GETLAST:
+            private_messages.extend(m.Data.split(','))  # Приватные сообщения
+            initial_messages_event.set()
+            print("Private messages from storage:", private_messages)
+        elif m.Header.Type == MT_GETLAST_PUBLIC:
+            public_messages.extend(m.Data.split(','))  # Общие сообщения
+            initial_messages_event.set()
+            print("Public messages from storage:", public_messages)
         else:
             time.sleep(1)
 
@@ -95,3 +137,4 @@ def Client():
         t.start()
 
 Client()
+
