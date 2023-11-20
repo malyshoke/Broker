@@ -17,7 +17,7 @@
 
 class Server {
 public:
-    Server() : maxID(MR_USER) {}
+    Server() : maxID(MR_USER), restServerID(MR_RESTSERVER) {}
 
     void LaunchClient() {
         STARTUPINFO si = { sizeof(si) };
@@ -122,6 +122,16 @@ public:
             break;
         }
 
+        case MT_REST:
+        {
+            auto session = make_shared<Session>(restServerID, m.data, std::chrono::high_resolution_clock::now());
+            sessions[session->id] = session;
+            restServerID = session->id;
+            Message::send(s, session->id, MR_BROKER, MR_RESTSERVER);
+            cout << "REST server entered" << endl;
+            break;
+        }
+
         case MT_GETLAST_PUBLIC:
         {
             if (m.header.from == MR_STORAGE)
@@ -213,6 +223,9 @@ public:
                     }
                 }
 
+                if (sessions.count(restServerID)) {
+                    sessions[restServerID]->add(m);
+                }
             }
             break;
         }
@@ -247,6 +260,7 @@ public:
 
 private:
     int maxID; 
+    int restServerID;
     map<int, shared_ptr<Session>> sessions; 
 };
 
