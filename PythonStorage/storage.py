@@ -6,38 +6,56 @@ from msg import *
 def ProcessMessages():
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
-        if (m.Header.Type == MT_DATA):
+        if m.Header.Type == MT_DATA:
             print(f"Message: {m.Data}")
             data = []
             try:
                 with open('msgstorage.json', 'r') as f:
                     data = json.load(f)
-            except:
-                with open('msgstorage.json', 'w') as f:
-                    pass
+            except FileNotFoundError:
+                pass
 
             with open('msgstorage.json', 'w') as f:
-                temp = {m.Header.From: m.Data}
+                print("LogHeaderTo", m.Header.To)
+                if m.Header.From == 50:
+                    temp = {'all': m.Data}
+                    print("New msg added to all")
+                else:
+                    temp = {str(m.Header.From): m.Data}
+                    print(f"New msg added to {m.Header.From}")
                 data.append(temp)
                 json.dump(data, f)
-                print(f"New msg added to {m.Header.From}")
+               
 
-        if (m.Header.Type == MT_GETLAST):
+        if m.Header.Type == MT_GETLAST:
             to = str(m.Header.From)
             with open('msgstorage.json', 'r') as f:
                 data = json.load(f)
-            text = ""
+            personal_text = ""
+            all_text = ""
             for item in data:
                 for key, value in item.items():
-                    if (key == to):
-                        text += value
-                        text += ","
-            text = text[:-1]
-            Message.SendMessage(m.Header.From, MT_GETLAST, text)
-            if (len(text) == 0):
-                print(f"No message to user {to}")
+                    if key == to:
+                        personal_text += value
+                        personal_text += ","
+                    elif key == 'all':
+                        all_text += value
+                        all_text += ","
+            personal_text = personal_text[:-1]
+            all_text = all_text[:-1]
+
+            Message.SendMessage(m.Header.From, MT_GETLAST, personal_text)
+            if len(personal_text) == 0:
+                print(f"No personal message to user {to}")
             else:
-                print(f"Last msgs sent to {to}: {text}")
+                print(f"Last personal msgs sent to {to}: {personal_text}")
+
+            Message.SendMessage(m.Header.From, MT_GETLAST_PUBLIC, all_text)
+            if len(all_text) == 0:
+                print("No 'all' messages")
+            else:
+                print(f"Last 'all' msgs sent to {to}: {all_text}")
+
         else:
             time.sleep(1)
 
