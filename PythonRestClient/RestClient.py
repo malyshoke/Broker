@@ -29,7 +29,7 @@ def ProcessMessages():
     while True:
         a = SendRequest({'to':MR_BROKER, 'from':clientId, 'type': MT_GETDATA, 'data':''})
         if int(a['type']) == MT_DATA:
-            print("New message: " + a['data'] + "\nFrom: " + a['from'])
+            print("You got a message: " + a['data'] + "\nFrom: " + a['from'])
         else:
             time.sleep(1)
 
