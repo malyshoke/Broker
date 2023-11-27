@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -53,6 +54,21 @@ func processClient(conn net.Conn) {
 
 		}
 
+	case MT_INITSTORAGE:
+		{
+			session := Session{
+				id:              MR_STORAGE,
+				name:            m.Data,
+				lastInteraction: time.Now(),
+				messages:        make(chan *Message, 10),
+			}
+			sessions[session.id] = session
+			fmt.Println("Storage connected")
+			MessageSend(conn, session.id, MR_BROKER, MT_INITSTORAGE, "")
+			session.lastInteraction = time.Now()
+			break
+		}
+
 	case MT_GETLAST:
 		{
 			if m.Header.From == MR_STORAGE {
@@ -77,7 +93,7 @@ func processClient(conn net.Conn) {
 								To:   MR_STORAGE,
 								From: m.Header.From,
 								Type: MT_GETLAST,
-								Size: 0, // или другое значение размера
+								Size: 0,
 							},
 							Data: "",
 						}
@@ -89,31 +105,57 @@ func processClient(conn net.Conn) {
 		}
 
 	default:
-		{
-			time.Sleep(100 * time.Millisecond)
-			if fromSession, ok := sessions[m.Header.From]; ok {
-				fromSession.lastInteraction = time.Now()
-				fmt.Printf("Client %v last interaction: %v\n", m.Header.From, fromSession.lastInteraction)
+		time.Sleep(100 * time.Millisecond)
+		iSessionFrom, fromSessionExists := sessions[m.Header.From]
+		StorageSession, storageExists := sessions[MR_STORAGE]
 
-				if toSession, ok := sessions[m.Header.To]; ok {
-					toSession.Add(m)
-					fmt.Println("Message delivered successfully")
-					toSession.lastInteraction = time.Now()
-				} else if m.Header.To == MR_ALL {
-					for id, session := range sessions {
-						if id != m.Header.From {
-							session.lastInteraction = time.Now()
-							session.Add(m)
-							fmt.Printf("Client %v last interaction: %v\n", m.Header.From, session.lastInteraction)
-						}
+		if fromSessionExists && m.Header.From != MR_STORAGE {
+			iSessionFrom.lastInteraction = time.Now()
+			iSessionTo, toSessionExists := sessions[m.Header.To]
+
+			if toSessionExists {
+				iSessionTo.Add(m)
+				if storageExists {
+					m.Data = "{'" + strconv.Itoa(int(m.Header.From)) + "':'" + m.Data + "'}"
+					ms := Message{
+						Header: MsgHeader{
+							To:   MR_BROKER,
+							From: m.Header.To,
+							Type: MT_DATA,
+							Size: int32(len(m.Data)),
+						},
+						Data: m.Data,
 					}
-					fmt.Println("Message delivered successfully")
-				} else {
-					fmt.Println("Message not delivered")
+					StorageSession.Add(&ms)
+					fmt.Println(ms.Data)
 				}
-			} else {
+				fmt.Println("Message delivered successfully")
+				iSessionTo.lastInteraction = time.Now()
+			} else if m.Header.To == MR_ALL {
+				mes := "{'" + strconv.Itoa(int(m.Header.From)) + "':'" + m.Data + "'}"
+				fmt.Println(mes)
+				for id, session := range sessions {
+					if id != m.Header.From && id != MR_STORAGE {
+						session.lastInteraction = time.Now()
+						session.Add(m)
+					}
+				}
+				if storageExists {
+					ms := Message{
+						Header: MsgHeader{
+							To:   MR_BROKER,
+							From: MR_ALL,
+							Type: MT_DATA,
+							Size: int32(len(mes)),
+						},
+						Data: mes,
+					}
+					StorageSession.Add(&ms)
+				}
+				fmt.Println("Message delivered successfully")
 			}
 		}
+		break
 	}
 }
 
