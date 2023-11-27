@@ -57,4 +57,15 @@ public:
             messages.pop();
         }
     }
+
+    void printContents() {
+        cout << endl;
+        cout << "Session ID: " << id << endl;
+        cout << "Messages:" << endl;
+        while (!messages.empty()) {
+            Message msg = messages.front();
+            cout << "Message: " << msg.clientID << endl << "Data:" << msg.data << endl;
+            messages.pop();
+        }
+    }
 };

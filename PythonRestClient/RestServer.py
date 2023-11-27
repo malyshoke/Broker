@@ -4,7 +4,7 @@ import json
 from msg import *
 
 users = []
-clientId = 0
+clientId = 30
 clientmsg = ''
 
 class requestHandler(BaseHTTPRequestHandler):
@@ -20,7 +20,7 @@ class requestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._set_headers()
-        content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
+        content_length = int(self.headers['Content-Length']) 
         post_data = self.rfile.read(content_length)
         data = post_data.decode('utf-8')
         data = json.loads(data)
@@ -29,7 +29,9 @@ class requestHandler(BaseHTTPRequestHandler):
             self.wfile.write(self.MakeResponse(m.Header.To, m.Header.From, m.Header.Type, m.Data).encode())
             print("Rest client " + str(m.Header.To) + " entered")
         else:
+            print(int(data['type']))
             m = Message.SendAsClient(int(data['to']), int(data['from']), int(data['type']), data['data'])
+            print("do_GET_LogMessageSendFrom:", m.Header.From, "LogMessageSendTo:", m.Header.To, "LogMessageSendType:", m.Header.Type, "m.Data:", m.Data)
             self.wfile.write(self.MakeResponse(m.Header.To, m.Header.From, m.Header.Type, m.Data).encode())
 
 
@@ -42,13 +44,14 @@ def ProcessMessages():
     global clientId
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
+        print("ProcessMessages_LogMessageSendFrom:", m.Header.From, "ProcessMessages_LogMessageSendTo:", m.Header.To)
         clientId = m.Header.To
         if m.Header.Type == MT_DATA:
-            print("New message: " + m.Data + "\nFrom: " + str(m.Header.From))
+            print("You got message: " + m.Data + "\nFrom: " + str(m.Header.From))
         else:
             time.sleep(1)
 
-def RestServe():
+def RestServer():
     global clientId
     w = threading.Thread(target=ProcessServer)
     w.start()
@@ -56,4 +59,4 @@ def RestServe():
     t = threading.Thread(target=ProcessMessages)
     t.start()
 
-RestServe()
+RestServer()

@@ -61,6 +61,7 @@ class Message:
 		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			s.connect((HOST, PORT))
 			m = Message(To, From, Type, Data)
+			print("LogSendAsClientData: ", Data)
 			if m.Header.From == m.Header.To:
 				print("You can't send message to yoursef")
 			else:
