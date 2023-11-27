@@ -54,6 +54,41 @@ func processClient(conn net.Conn) {
 
 		}
 
+	case MT_GETLAST_PUBLIC:
+		{
+			if m.Header.From == MR_STORAGE {
+				if sessionTo, ok := sessions[m.Header.To]; ok {
+					ms := Message{
+						Header: MsgHeader{
+							To:   m.Header.To,
+							From: MR_BROKER,
+							Type: MT_GETLAST_PUBLIC,
+							Size: int32(len(m.Data)),
+						},
+						Data: m.Data,
+					}
+					sessionTo.Add(&ms)
+				}
+			} else {
+				if sessionFrom, ok := sessions[m.Header.From]; ok {
+					if storageSession, ok := sessions[MR_STORAGE]; ok {
+						sessionFrom.lastInteraction = time.Now()
+						ms := Message{
+							Header: MsgHeader{
+								To:   MR_STORAGE,
+								From: m.Header.From,
+								Type: MT_GETLAST_PUBLIC,
+								Size: 0,
+							},
+							Data: "",
+						}
+						storageSession.Add(&ms)
+					}
+				}
+			}
+			break
+		}
+
 	case MT_INITSTORAGE:
 		{
 			session := Session{
@@ -104,6 +139,21 @@ func processClient(conn net.Conn) {
 			break
 		}
 
+	case MT_REST:
+		{
+			session := Session{
+				id:              MR_RESTSERVER,
+				name:            m.Data,
+				lastInteraction: time.Now(),
+				messages:        make(chan *Message, 10),
+			}
+			sessions[session.id] = session
+			fmt.Println("Rest connected")
+			MessageSend(conn, session.id, MR_BROKER, MT_REST, "")
+			session.lastInteraction = time.Now()
+			break
+		}
+
 	default:
 		time.Sleep(100 * time.Millisecond)
 		iSessionFrom, fromSessionExists := sessions[m.Header.From]
@@ -115,6 +165,7 @@ func processClient(conn net.Conn) {
 
 			if toSessionExists {
 				iSessionTo.Add(m)
+				fmt.Println("Message added:", m.Data)
 				if storageExists {
 					m.Data = "{'" + strconv.Itoa(int(m.Header.From)) + "':'" + m.Data + "'}"
 					ms := Message{

@@ -224,9 +224,6 @@ public:
 				}
 
 				if (sessions.count(restServerID)) {
-					//for (auto const& [id, session] : sessions) {
-					//	session->printContents();
-					//}
 				}
 				sessions[restServerID]->add(m);
 			}

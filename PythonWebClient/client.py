@@ -13,7 +13,7 @@ clientmsg = ''
 private_messages = []
 public_messages = []
 
-initial_messages_event = threading.Event()  # Event to signal when initial messages are received
+initial_messages_event = threading.Event()  
 
 class requestHandler(BaseHTTPRequestHandler):
     global messages, clientmsg, initial_messages, private_messages, public_messages
