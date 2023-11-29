@@ -10,13 +10,15 @@ enum MessageTypes
 	MT_CONFIRM,
 	MT_GETLAST,
 	MT_INITSTORAGE, 
-	MT_GETLAST_PUBLIC
+	MT_GETLAST_PUBLIC,
+	MT_REST
 };
 
 enum MessageRecipients
 {
 	MR_BROKER = 10,
 	MR_STORAGE = 20,
+	MR_RESTSERVER = 30,
 	MR_ALL = 50,
 	MR_USER = 100   
 };
