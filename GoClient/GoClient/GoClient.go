@@ -52,7 +52,6 @@ func main() {
 			fmt.Scanln(&str)
 			MessageCall(to, MT_DATA, str)
 		case 2:
-			fmt.Scanln()
 			fmt.Print("Enter your message: ")
 			var str string
 			fmt.Scanln(&str)
