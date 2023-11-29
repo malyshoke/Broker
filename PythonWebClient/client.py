@@ -106,7 +106,6 @@ def ProcessMessages():
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
         clientId = m.Header.To
-        print("LogHeaderType: ", m.Header.Type)
         if m.Header.Type == MT_DATA:
             messages.append('Message: ' + m.Data + "   From: " + str(m.Header.From))
             print("New message: " + m.Data + "\nFrom: " + str(m.Header.From))

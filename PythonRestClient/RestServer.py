@@ -31,7 +31,6 @@ class requestHandler(BaseHTTPRequestHandler):
         else:
             print(int(data['type']))
             m = Message.SendAsClient(int(data['to']), int(data['from']), int(data['type']), data['data'])
-            print("do_GET_LogMessageSendFrom:", m.Header.From, "LogMessageSendTo:", m.Header.To, "LogMessageSendType:", m.Header.Type, "m.Data:", m.Data)
             self.wfile.write(self.MakeResponse(m.Header.To, m.Header.From, m.Header.Type, m.Data).encode())
 
 
@@ -44,7 +43,6 @@ def ProcessMessages():
     global clientId
     while True:
         m = Message.SendMessage(MR_BROKER, MT_GETDATA)
-        print("ProcessMessages_LogMessageSendFrom:", m.Header.From, "ProcessMessages_LogMessageSendTo:", m.Header.To)
         clientId = m.Header.To
         if m.Header.Type == MT_DATA:
             print("You got message: " + m.Data + "\nFrom: " + str(m.Header.From))
