@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"net"
 	"unsafe"
@@ -111,12 +112,13 @@ func MessageSend(conn net.Conn, To int32, From int32, Type int32, Data string) *
 }
 
 func MessageCall(To int32, Type int32, Data string) *Message {
-	conn, _ := net.Dial("tcp", "localhost:12345")
+	conn, _ := net.Dial("tcp", "127.0.0.1:12435")
 	defer conn.Close()
 	m := MessageSend(conn, To, clientID, Type, Data)
 	m.Receive(conn)
 	if m.Header.Type == MT_INIT {
 		clientID = m.Header.To
+		fmt.Printf("clientID is %v\n", clientID)
 	}
 	return m
 }

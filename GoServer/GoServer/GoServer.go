@@ -22,7 +22,7 @@ func IsActive() {
 				delete(sessions, id)
 			}
 		}
-		time.Sleep(100)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -30,7 +30,7 @@ func processClient(conn net.Conn) {
 	defer conn.Close()
 	m := new(Message)
 	code := m.Receive(conn)
-	fmt.Println(m.Header.To, ":", m.Header.From, ":", m.Header.Type, ":", code)
+	//fmt.Println(m.Header.To, ":", m.Header.From, ":", m.Header.Type, ":", code)
 
 	switch code {
 
@@ -52,32 +52,114 @@ func processClient(conn net.Conn) {
 			session.Send(conn)
 		}
 
+	case MT_INITSTORAGE:
+		session := Session{
+			id:              MR_STORAGE,
+			name:            m.Data,
+			lastInteraction: time.Now(),
+			messages:        make(chan *Message, 10),
+		}
+		sessions[session.id] = &session
+		fmt.Println("Storage connected")
+		MessageSend(conn, session.id, MR_BROKER, MT_INITSTORAGE, "")
+		session.lastInteraction = time.Now()
+
+	case MT_GET_FROM_STORAGE:
+		{
+			if m.Header.From == MR_STOR {
+				if sessionTo, ok := sessions[m.Header.To]; ok {
+					ms := Message{
+						Header: MsgHeader{
+							To:   m.Header.To,
+							From: MR_BROKER,
+							Type: MT_GET_FROM_STORAGE,
+							Size: int32(len(m.Data)),
+						},
+						Data: m.Data,
+					}
+					sessionTo.Add(&ms)
+				}
+			} else {
+				if sessionFrom, ok := sessions[m.Header.From]; ok {
+					if storageSession, ok := sessions[MR_STOR]; ok {
+						sessionFrom.lastInteraction = time.Now()
+						ms := Message{
+							Header: MsgHeader{
+								To:   MR_STOR,
+								From: m.Header.From,
+								Type: MT_GET_FROM_STORAGE,
+								Size: 0,
+							},
+							Data: "",
+						}
+						storageSession.Add(&ms)
+					}
+				}
+			}
+			break
+		}
+
 	default:
 		{
 			time.Sleep(100 * time.Millisecond)
-			if fromSession, ok := sessions[m.Header.From]; ok {
-				fromSession.lastInteraction = time.Now()
-				if toSession, ok := sessions[m.Header.To]; ok {
-					toSession.Add(m)
+
+			iSessionFrom, fromExists := sessions[m.Header.From]
+			storageSession, storageExists := sessions[MR_STOR]
+
+			if fromExists && m.Header.From != MR_STOR {
+				iSessionFrom.lastInteraction = time.Now()
+
+				iSessionTo, toExists := sessions[m.Header.To]
+				if toExists {
+					iSessionTo.Add(m)
+
+					if storageExists {
+						m.Data = "{'" + fmt.Sprint(m.Header.From) + "':'" + m.Data + "'}"
+						ms := Message{
+							Header: MsgHeader{
+								To:   MR_BROKER,
+								From: m.Header.To,
+								Type: MT_DATA,
+								Size: int32(len(m.Data)),
+							},
+							Data: m.Data,
+						}
+						storageSession.Add(&ms)
+					}
+
 					fmt.Println("Message delivered successfully")
-					toSession.lastInteraction = time.Now()
+					iSessionTo.lastInteraction = time.Now()
 				} else if m.Header.To == MR_ALL {
 					for id, session := range sessions {
-						if id != m.Header.From {
+						if id != m.Header.From && id != MR_STOR {
 							session.lastInteraction = time.Now()
 							session.Add(m)
-							fmt.Printf("Client %v last interaction: %v\n", m.Header.From, session.lastInteraction)
+
+							if storageExists {
+								mes := "{'" + fmt.Sprint(m.Header.From) + "':'" + m.Data + "'}"
+								ms := Message{
+									Header: MsgHeader{
+										To:   MR_BROKER,
+										From: id,
+										Type: MT_DATA,
+										Size: int32(len(mes)),
+									},
+									Data: mes,
+								}
+								storageSession.Add(&ms)
+							}
 						}
 					}
+
 					fmt.Println("Message delivered successfully")
-				} else {
-					fmt.Println("Message not delivered")
 				}
+			}
+			if _, exists := sessions[MT_REST]; exists {
+				sessions[MT_REST].Add(m)
 			}
 
 			break
 		}
-
 	}
 }
 

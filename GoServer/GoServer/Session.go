@@ -36,7 +36,7 @@ func (session *Session) Send(conn net.Conn) {
 }
 
 func (session *Session) stillActive() bool {
-	if session.inActivity() > 1000000 {
+	if session.inActivity() > 10000 {
 		return false
 	} else {
 		return true
