@@ -13,6 +13,15 @@ type Session struct {
 	messages        chan *Message
 }
 
+func NewSession(id int32, name string) *Session {
+	return &Session{
+		id:              id,
+		name:            name,
+		lastInteraction: time.Now(),
+		messages:        make(chan *Message, 10),
+	}
+}
+
 func (session *Session) Add(m *Message) {
 	session.messages <- m
 }
